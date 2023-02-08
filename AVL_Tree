@@ -1,0 +1,166 @@
+#include <iostream>
+
+class Node {
+ public:
+  int data, height;
+  Node *left, *right;
+
+  Node(int data) {
+    this->data = data;
+    height = 1;
+    left = right = nullptr;
+  }
+};
+
+class AVLTree {
+ public:
+  Node *root;
+
+  AVLTree() { root = nullptr; }
+
+  int height(Node *node) {
+    if (node == nullptr) return 0;
+    return node->height;
+  }
+
+  int balanceFactor(Node *node) {
+    if (node == nullptr) return 0;
+    return height(node->left) - height(node->right);
+  }
+
+  void preOrderTraverse(Node *node) {
+  if (!node) return;
+  std::cout << node->data << " ";
+  preOrderTraverse(node->left);
+  preOrderTraverse(node->right);
+  }
+
+  Node *rightRotate(Node *node) {
+    Node *x = node->left;
+    Node *T2 = x->right;
+
+    x->right = node;
+    node->left = T2;
+
+    node->height = std::max(height(node->left), height(node->right)) + 1;
+    x->height = std::max(height(x->left), height(x->right)) + 1;
+
+    return x;
+  }
+
+  Node *leftRotate(Node *node) {
+    Node *y = node->right;
+    Node *T2 = y->left;
+
+    y->left = node;
+    node->right = T2;
+
+    node->height = std::max(height(node->left), height(node->right)) + 1;
+    y->height = std::max(height(y->left), height(y->right)) + 1;
+
+    return y;
+  }
+
+  Node *insert(Node *node, int data) {
+    if (node == nullptr) return new Node(data);
+
+    if (data < node->data)
+      node->left = insert(node->left, data);
+    else if (data > node->data)
+      node->right = insert(node->right, data);
+    else
+      return node;
+
+    node->height = std::max(height(node->left), height(node->right)) + 1;
+
+    int balance = balanceFactor(node);
+
+    if (balance > 1 && data < node->left->data)
+      return rightRotate(node);
+
+    if (balance < -1 && data > node->right->data)
+      return leftRotate(node);
+
+    if (balance > 1 && data > node->left->data) {
+      node->left = leftRotate(node->left);
+      return rightRotate(node);
+    }
+
+    if (balance < -1 && data < node->right->data) {
+      node->right = rightRotate(node->right);
+      return leftRotate(node);
+    }
+
+    return node;
+  }
+
+  Node *getMinValueNode(Node *node) {
+    Node *current = node;
+    while (current->left != nullptr) current = current->left;
+    return current;
+  }
+
+  Node *deleteNode(Node *node, int data) {
+    if (node == nullptr) return node;
+
+    if (data < node->data)
+      node->left = deleteNode(node->left, data);
+        else if (data > node->data)
+      node->right = deleteNode(node->right, data);
+    else {
+      if ((node->left == nullptr) || (node->right == nullptr)) {
+        Node *temp = node->left ? node->left : node->right;
+        if (temp == nullptr) {
+          temp = node;
+          node = nullptr;
+        } else
+          *node = *temp;
+        delete temp;
+      } else {
+        Node *temp = getMinValueNode(node->right);
+        node->data = temp->data;
+        node->right = deleteNode(node->right, temp->data);
+      }
+    }
+
+    if (node == nullptr) return node;
+
+    node->height = std::max(height(node->left), height(node->right)) + 1;
+
+    int balance = balanceFactor(node);
+
+    if (balance > 1 && balanceFactor(node->left) >= 0)
+      return rightRotate(node);
+
+    if (balance > 1 && balanceFactor(node->left) < 0) {
+      node->left = leftRotate(node->left);
+      return rightRotate(node);
+    }
+
+    if (balance < -1 && balanceFactor(node->right) <= 0)
+      return leftRotate(node);
+
+    if (balance < -1 && balanceFactor(node->right) > 0) {
+      node->right = rightRotate(node->right);
+      return leftRotate(node);
+    }
+
+    return node;
+  }
+};
+
+int main() {
+  AVLTree tree;
+
+  tree.root = tree.insert(tree.root, 10);
+  tree.root = tree.insert(tree.root, 20);
+  tree.root = tree.insert(tree.root, 30);
+  tree.root = tree.insert(tree.root, 40);
+  tree.root = tree.insert(tree.root, 50);
+  tree.root = tree.insert(tree.root, 25);
+
+  std::cout << "Pre order traversal of the constructed AVL tree is \n";
+  tree.preOrderTraverse(tree.root);
+
+  return 0;
+}
